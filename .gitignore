@@ -1,0 +1,6 @@
+node_modules/
+fbot_config.js
+*.out
+package.json
+package-lock.json
+
