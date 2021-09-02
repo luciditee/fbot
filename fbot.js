@@ -1,4 +1,13 @@
 
+/*
+ * This code is subject to the licensing agreement found in the LICENSE file.
+ * You may not modify or redistribute this code without the inclusion of the LICENSE file
+ * contents alongside this code.
+ *
+ * See LICENSE for details.
+ *
+ */
+
 const configFile = require("./fbot_config.js");
 const Discord = require("discord.js");
 
