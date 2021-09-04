@@ -1,5 +1,6 @@
 data = {
   "discordToken": "put your discord bot's API token here",
+  "avoidEmojiCollisions": true,
   "triggerConfig": [
     {
       "sequences": [

@@ -59,19 +59,46 @@ class Trigger {
 		this.lastTrigger = Math.floor(new Date().getTime() / 1000)
 	}
 
+	purgeEmojiReferences(str) {
+		if (!configFile.avoidEmojiCollisions)
+			return str;
+
+		let colon = false;
+		let buf = "";
+		let cBuf = "";
+		for (let i = 0; i < str.length; i++) {
+			// place into alternating buffers depending on the
+			// last time we saw a colon
+			if (colon)
+				cBuf += str[i];
+			else
+				buf += str[i];
+			if (str[i] == ':') {
+				// encountering a colon means we flip the state
+				// and clear secondary buffer if it was a closing
+				// colon (the last one in an :emoji:)
+				cBuf += str[i];
+				colon = !colon;
+				if (!colon) {
+					cBuf = "";
+				}
+			}
+		}
+
+		// string has opening colon, but no closing colon,
+		// therefore it cannot be an valid emoji
+		if (colon)
+			buf += cBuf;
+		return buf;
+	}
+
 	// detects which string was the trigger word and returns it
 	// or false if it doesn't find it
-	whichIs(str) {
+	whichIs(s) {
+		let str = this.purgeEmojiReferences(s);
 		for (var i = 0; i < this.words.length; i++) {
-//			console.log("checking " + this.words[i] + " against " + str);
 			if (this.useRegex) {
-//				console.log(str);
-//				console.log(this.words[i]);
-//				console.log(this.words[i].word.test(str.toLowerCase()));
-//				console.log("---");
 				if (this.words[i].word.test(str.toLowerCase()) === true) {
-//					console.log("success");
-//					console.log(str.toLowerCase().match(this.words[i].word));
 					var m = str.toLowerCase().match(this.words[i].word)[0];
 					var p = this.presentTenseFilter(this.words[i], m, this.words[i].word);				
 					if (p == false)
@@ -110,19 +137,6 @@ class Trigger {
 			return match;
 		let w = match.trim();
 		if (w.slice(w.length - 3) == "ing") {
-/*			var r = match.slice(0, w.length - 3);
-			if (wordObj.useRegex) {
-				var s = r;
-				while (s !== "" && s.length > 0) {
-					s = s.slice(0, s.length-1);
-					console.log(s)
-					if (pattern.test(s))
-						return s;
-				}
-				return false;
-			} else
-				return r;
-*/
 			return false; // fuck english verb conjugation
 		}
 		return w;
@@ -157,7 +171,6 @@ for (let i = 0; i < configFile.triggerConfig.length; i++) {
 
 bot.on('message', async (msg) => {
 	if (msg.author.bot) return;
-//	console.log("got message from " + msg.author);
 
 	var currTime = Math.floor(new Date().getTime() / 1000)
 
@@ -172,7 +185,6 @@ bot.on('message', async (msg) => {
 				triggers[i].resetClock()
 
 				// say the line, bart!
-//				msg.channel.send("> " + triggers[i].whichIs(msg.content) + "\nFuck 'em");
 				msg.channel.send("" + word + message);
 
 				// debug
@@ -184,8 +196,6 @@ bot.on('message', async (msg) => {
 		}
 	}
 
-	// msg.content
-	//console.log("received: " + msg.content);  
 })
 
 
