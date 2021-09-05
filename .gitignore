@@ -1,5 +1,6 @@
 node_modules/
 *.swp
+*.js.save
 fbot_config.js
 *.out
 package.json

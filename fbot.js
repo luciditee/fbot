@@ -21,6 +21,64 @@ bot.on('ready', () => {
 
 bot.login(token)
 
+class Command {
+	constructor(name, action, cooldown=0, adminOnly=true) {
+		this.name = name;
+		this.action = action;
+		this.countdownLength = cooldown;
+		this.lastTrigger = 0;
+		this.adminOnly = adminOnly;
+	}
+
+	userIsAdmin(author) {
+		if (!configFile.admins)
+			return false;
+		else
+			for (let i = 0; i < configFile.admins.length; i++) {
+				if (author == configFile.admins[i])
+					return true;
+			}
+		return false;
+	}
+
+	parseForCommand(msg, author, msgObj) {
+		let m = msg.trim();
+		if (m.startsWith(configFile.commandPrefix)) {
+			let cmdSequence = m.substring(m.indexOf(configFile.commandPrefix) + configFile.commandPrefix.length).trim();
+			let msgTime = Math.floor(new Date().getTime() / 1000);
+			if (cmdSequence.startsWith(this.name)) {
+				if (!this.isValid(msgTime))
+					return false; // too fast, cooling down
+				if (this.adminOnly && !this.userIsAdmin(author))
+					return false; // need admin, and you aren't admin
+
+				let params = "";
+				if (cmdSequence.indexOf(this.name)
+					+ this.name.length < cmdSequence.length)
+					params = cmdSequence.substring(cmdSequence
+						.indexOf(this.name) + this.name.length);
+				this.runCommand(m, cmdSequence, params, author, bot, msgObj);
+				this.resetClock();
+				return true;
+			}
+		}
+		return false;
+	}
+
+	runCommand(msg, sequence, params, author, bot, msgObj) {
+		return this.action(msg, sequence, params.trim(), author, bot, msgObj);
+	}
+
+        isValid(time) {
+                return ((time -  this.lastTrigger) > this.countdownLength);
+        }
+
+        // resets the clock
+        resetClock() {
+                this.lastTrigger = Math.floor(new Date().getTime() / 1000)
+        }
+}
+
 class Trigger {
 
 	constructor(words, countdown, bl, useRegex=false) {
@@ -160,6 +218,11 @@ class Trigger {
 
 }
 
+// silly patch to allow regex to serialize to a string in a JSON context
+Object.defineProperty(RegExp.prototype, "toJSON", {
+  value: RegExp.prototype.toString
+});
+
 // parse triggers from config
 var triggers = [];
 for (let i = 0; i < configFile.triggerConfig.length; i++) {
@@ -169,11 +232,56 @@ for (let i = 0; i < configFile.triggerConfig.length; i++) {
 	triggers.push(t); // pusha t
 }
 
+// core bot commands
+var commands = [
+//	new Command(name, action, cooldown, adminOnly)
+	new Command("list", (msg, seq, param, author, bot, msgObj) => {
+		let ret = "";
+		if (param.trim() == "") {
+			ret = "**List of all triggers/sequences:**\n\`\`\`\n ";
+			for (let i = 0; i < configFile.triggerConfig.length; i++) {
+				ret += " - [" + configFile.triggerConfig[i].handle + "] ";
+				ret += " [ cooldown=" + configFile.triggerConfig[i].cooldown + "s ]\n";
+				for (let j = 0; j < configFile.triggerConfig[i].sequences.length; j++) {
+					ret += "    + \"" + configFile.triggerConfig[i]
+						.sequences[j].word.toString() + "\"";
+					if (configFile.triggerConfig[i].useRegex)
+						ret += " (regex)";
+					ret += "\n";
+				}
+			}
+		} else {
+			ret = "**Search results for trigger '" + param + "':**\n\`\`\`json\n ";
+			let ap = "";
+			for (let i = 0; i < configFile.triggerConfig.length; i++) {
+				if (param.trim() == configFile.triggerConfig[i].handle) {
+					ap += JSON.stringify(configFile.triggerConfig[i].sequences);
+					break;
+				}
+			}
+
+			if (ap === "")
+				ap += "[no results found]";
+
+			ret += ap;
+		}
+		ret += "\`\`\`";
+		msgObj.channel.send(ret);
+	}, 3, true),
+];
+
+// bot core functionality
 bot.on('message', async (msg) => {
 	if (msg.author.bot) return;
 
-	var currTime = Math.floor(new Date().getTime() / 1000)
+	// bot commands
+	for (i = 0; i < commands.length; i++) {
+		if (commands[i].parseForCommand(msg.content, msg.author.id, msg))
+			return; // don't use fuck 'em triggers if we found a command
+	}
 
+	// fuck 'em triggers
+	var currTime = Math.floor(new Date().getTime() / 1000)
 	for (i = 0; i < triggers.length; i++) {
 		// yes, I know what short-circuit eval is
 		// no, I don't care, this was like this for debug print
@@ -188,7 +296,7 @@ bot.on('message', async (msg) => {
 				msg.channel.send("" + word + message);
 
 				// debug
-//				console.log("reacted to trigger " + i);
+				// console.log("reacted to trigger " + i);
 
 				// stop iteration, don't trigger on multiples
 				break;

@@ -1,6 +1,10 @@
 data = {
   "discordToken": "put your discord bot's API token here",
   "avoidEmojiCollisions": true,
+  "commandPrefix": "f!",
+  "admins": [
+    0, // this number should be equivalent to your Discord user ID. NOT THE SAME AS USERNAME
+  ],
   "triggerConfig": [
     {
       "sequences": [
