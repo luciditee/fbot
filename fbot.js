@@ -81,7 +81,8 @@ class Command {
 
 class Trigger {
 
-	constructor(words, countdown, bl, useRegex=false) {
+	constructor(handle, words, countdown, bl, useRegex=false) {
+		this.handle = handle;
 		this.words = words
 		this.countdownLength = countdown
 		this.lastTrigger = 0
@@ -227,7 +228,7 @@ Object.defineProperty(RegExp.prototype, "toJSON", {
 var triggers = [];
 for (let i = 0; i < configFile.triggerConfig.length; i++) {
 	let conf = configFile.triggerConfig[i];
-	let t = new Trigger(conf.sequences, conf.cooldown, conf.blacklist,
+	let t = new Trigger(conf.handle, conf.sequences, conf.cooldown, conf.blacklist,
 			conf.useRegex);
 	triggers.push(t); // pusha t
 }
@@ -236,24 +237,46 @@ for (let i = 0; i < configFile.triggerConfig.length; i++) {
 var commands = [
 //	new Command(name, action, cooldown, adminOnly)
 	new Command("help", (msg, seq, param, author, bot, msgObj) => {
-		let ret = "**List of all bot commands:** \`\`\`\n ";
+		let ret = "**List of all bot commands:** \`\`\`";
 		for (let i = 0; i < commands.length; i++) {
 			if (commands[i].name != "help") {
-				ret += commands[i].name;
+				ret += " - " + commands[i].name;
 				if (commands[i].adminOnly)
 					ret += " (admin only)";
 				if (i < commands.length-1)
-					ret += ", ";
+					ret += "\n";
 			}
 		}
 		ret += "\`\`\`";
 		msgObj.channel.send(ret);
-	}, 10, true),
+	}, 10, false),
+        new Command("timeleft", (msg, seq, param, author, bot, msgObj) => {
+                let ret = "";
+		for (let i = 0; i < triggers.length; i++) {
+                        let trigger = triggers[i];
+                        if (trigger.handle == param) {
+				let curtime = Math.floor(new Date().getTime() / 1000);
+				let left = trigger.countdownLength + (trigger.lastTrigger - curtime);
+				let sec = left % 60;
+				let min = Math.floor((left - sec) / 60);
+				if (left <= 0)
+					ret = "Trigger `" + param + "` is ready to use again";
+				else
+					ret = "Trigger `" + param + "` has " + min + "m "
+						+ sec + "s left on cooldown";
+			}
+		}
+		if (ret === "") {
+			ret += "Unable to find trigger `" + param + "`, use **"
+                                + configFile.commandPrefix + "list** for a list of triggers";
+		}
+		msgObj.channel.send(ret);
+        }, 10, true),
 	new Command("warmup", (msg, seq, param, author, bot, msgObj) => {
 		let ret = "";
-		for (let i = 0; i < configFile.triggerConfig.length; i++) {
-			let trigger = configFile.triggerConfig[i];
-			if (trigger.handle == param) {
+		for (let i = 0; i < triggers.length; i++) {
+			let trigger = triggers[i];
+                       	if (trigger.handle == param) {
 				trigger.lastTrigger = 0;
 				ret += "Reset cooldown for trigger `" + trigger.handle + "`";
 				break;
