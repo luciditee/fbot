@@ -105,9 +105,41 @@ Here are all the admin commands:
 * `timeleft trigger` - The amount of time remaining in the cooldown for a given trigger. Replace `trigger` with the one you'd like to know about.
 * `warmup trigger` - Resets (warms up) the cooldown timer to 0.
 
-Support for custom commands is coming later.
+Commands are always parsed before triggers, so if a command somehow shares an incantation with a trigger sequence, the command will still run as expected--but the trigger won't set off a "fuck 'em" response.
 
+#### Custom Commands
+At the bottom of `fbot_config.js`, after the `triggerConfig` section, you'll see a section for `commands`. In this section, you can write your own JavaScript code to comprise custom commands for the bot, thereby allowing you unfettered extensions to the bot's functionality without ever having to directly edit the `fbot.js` code itself.
 
+The following is an example command which, when the user types `f!ping` (assuming the default prefix setting of `f!`), will cause the bot to respond with `pong`.
+
+```
+    {
+      "name": "ping",
+      "cooldown": 5,
+      "adminOnly": false,
+      "action": (msg, sequence, params, author, bot, msgObj) => {
+        msgObj.channel.send("pong");
+      }
+    }
+```
+
+Most of this should be self explanatory.
+
+The `action` is a function that has 6 parameters:
+
+- `msg` is the plaintext message that was seen by the bot.
+- `sequence` is the text of the command, minus the prefix, if you need access to this.
+- `params` is all text after the command text, so the `params` of `f!list test` would simply read `test`. The `params` string is always whitespace-trimmed.
+- `author` is the User ID of the author, in case you need to compare it against something.
+- `bot` is the Discord.js `bot` object.
+- `msgObj` is the Discord.js `message` object emitted by the message event, which you can use to check for specific metadata not exposed through the other function parameters, such as the channel the message was sent to.
+
+Trigger and Command objects for the bot are appended to the `bot` object, and can be accessed as follows:
+
+- `bot.fbotTriggers`
+- `bot.fbotCommands`
+
+in case you need access to this information.
 
 #### Pull requests
 PRs are welcome but this bot is a joke and I don't expect anyone to take it seriously. Have fun!

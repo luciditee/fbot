@@ -330,6 +330,10 @@ if (configFile.commands !== undefined) {
 	}
 }
 
+// finally, append fbot-specific stuff to the bot object
+bot['fbotTriggers'] = triggers;
+bot['fbotCommands'] = commands;
+
 // bot core functionality
 bot.on('message', async (msg) => {
 	if (msg.author.bot) return;
