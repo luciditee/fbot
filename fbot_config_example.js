@@ -28,6 +28,16 @@ data = {
       "blacklist": null,
       "useRegex": true
     }
+  ],
+  "commands": [
+      {
+        "name": "ping",
+        "cooldown": 5,
+        "adminOnly": false,
+        "action": (msg, sequence, params, author, bot, msgObj) => {
+          msgObj.channel.send("pong");
+      }
+    }
   ]
 };
 

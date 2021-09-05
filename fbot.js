@@ -322,6 +322,14 @@ var commands = [
 	}, 3, true),
 ];
 
+// load commands from config
+if (configFile.commands !== undefined) {
+	for (let i = 0; i < configFile.commands.length; i++) {
+		let c = configFile.commands[i];
+		commands.push(new Command(c.name, c.action, c.cooldown, c.adminOnly));
+	}
+}
+
 // bot core functionality
 bot.on('message', async (msg) => {
 	if (msg.author.bot) return;
