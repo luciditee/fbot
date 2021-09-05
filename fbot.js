@@ -235,6 +235,35 @@ for (let i = 0; i < configFile.triggerConfig.length; i++) {
 // core bot commands
 var commands = [
 //	new Command(name, action, cooldown, adminOnly)
+	new Command("help", (msg, seq, param, author, bot, msgObj) => {
+		let ret = "**List of all bot commands:** \`\`\`\n ";
+		for (let i = 0; i < commands.length; i++) {
+			if (commands[i].name != "help") {
+				ret += commands[i].name;
+				if (commands[i].adminOnly)
+					ret += " (admin only)";
+				if (i < commands.length-1)
+					ret += ", ";
+			}
+		}
+		ret += "\`\`\`";
+		msgObj.channel.send(ret);
+	}, 10, true),
+	new Command("warmup", (msg, seq, param, author, bot, msgObj) => {
+		let ret = "";
+		for (let i = 0; i < configFile.triggerConfig.length; i++) {
+			let trigger = configFile.triggerConfig[i];
+			if (trigger.handle == param) {
+				trigger.lastTrigger = 0;
+				ret += "Reset cooldown for trigger `" + trigger.handle + "`";
+				break;
+			}
+		}
+		if (ret === "")
+			ret += "Unable to find trigger `" + param + "`, use **"
+				+ configFile.commandPrefix + "list** for a list of triggers";
+		msgObj.channel.send(ret);
+	}, 5, true),
 	new Command("list", (msg, seq, param, author, bot, msgObj) => {
 		let ret = "";
 		if (param.trim() == "") {
