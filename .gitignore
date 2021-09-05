@@ -3,6 +3,5 @@ node_modules/
 *.js.save
 fbot_config.js
 *.out
-package.json
 package-lock.json
 

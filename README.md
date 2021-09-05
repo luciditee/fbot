@@ -50,6 +50,8 @@ As seen in `fbot_config.js`, you can edit how the bot interacts with things.
 
 * **Regular expressions:** Character vomit that describes an abstract set of character sequence matching rules. I use [Regex101](https://regex101.com/) for editing my regular expressions and as a quick reference card, but you can use whatever.
 
+* **Command:** An explicit directive given to the bot to do something. See the *Commands* section below.
+
 #### Example of a standard, unremarkable trigger
 ```
     {
@@ -87,6 +89,25 @@ This trigger *does* use regular expressions, and its only sequence is one that d
 * `smartPlural` means it will attempt to use `N` or `eN` (where `N` is the `s` character specified in `pluralize`) depending on whether or not it ends in a consonant. This feature is optional and doesn't work for every English word, and breaks horribly in other languages.
 
 * `presentTenseFilter` identifies when English present tense conjugations `-ing` are used, and disables pluralization for that sequence. Without this feature, for example, "advertising" would be "advertisings," which isn't really a word, and trying to account for valid English verb conjugation is just way too out of scope for this silly little bot.
+
+#### Commands
+
+A *command* can be given to the bot by any user (or by admins, as defined in the `admins` section of `fbot_config.js`).
+
+To mark yourself as an admin to use admin-only commands, you must use your [Discord user ID](https://support.discord.com/hc/en-us/articles/206346498-Where-can-I-find-my-User-Server-Message-ID-) number, which is distinct from your username (it's a really long number), and put it in the `admins` array of `fbot_config.js`.
+
+Commands are preceded by a prefix, by default `f!`, and would be invoked as `f!help` or `f!list`.
+
+Here are all the admin commands:
+
+* `help` - Lists all commands in the bot.
+* `list trigger` - Lists all triggers and sequences available within the bot, and their cooldowns. Replace `trigger` with a trigger you'd like to list more thoroughly, *or* omit it entirely and just use the `list` command alone to get a list of everything.
+* `timeleft trigger` - The amount of time remaining in the cooldown for a given trigger. Replace `trigger` with the one you'd like to know about.
+* `warmup trigger` - Resets (warms up) the cooldown timer to 0.
+
+Support for custom commands is coming later.
+
+
 
 #### Pull requests
 PRs are welcome but this bot is a joke and I don't expect anyone to take it seriously. Have fun!
